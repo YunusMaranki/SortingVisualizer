@@ -4,7 +4,7 @@ import random
 import time
 from algorithms import *
 GREEN = (10,256,150)
-
+RED = (255, 107, 107)
 
 class windowInformation:
     def __init__(self,height,width,headerheight,columns):
@@ -32,14 +32,17 @@ class Board:
 
     def swap(self,indexA,indexB):
         self.columns[indexA],self.columns[indexB] = self.columns[indexB],self.columns[indexA]
-        dpg.configure_item(self.ids[indexA],pmin=[indexA*self.w.columnwidth,self.w.bodyheight-(self.columns[indexA].height+1)*self.w.columnheight-5])
-        dpg.configure_item(self.ids[indexB],pmin=[indexB*self.w.columnwidth,self.w.bodyheight-(self.columns[indexB].height+1)*self.w.columnheight-5])
+        dpg.configure_item(self.ids[indexA],pmin=[indexA*self.w.columnwidth,self.w.bodyheight-(self.columns[indexA].height+1)*self.w.columnheight-5]
+                           ,fill=self.columns[indexA].color)
+        dpg.configure_item(self.ids[indexB],pmin=[indexB*self.w.columnwidth,self.w.bodyheight-(self.columns[indexB].height+1)*self.w.columnheight-5]
+                           ,fill=self.columns[indexB].color)
 
     def initalDraw(self):
         dpg.delete_item(self.parent,children_only=True)
         self.ids = [] 
         for i, num in  enumerate([x.height for x in self.columns]):
-            id = dpg.draw_rectangle([i*self.w.columnwidth,self.w.bodyheight-(num+1)*self.w.columnheight-5],[(i+1)*self.w.columnwidth,self.w.bodyheight-5],fill=GREEN,parent=self.parent)
+            id = dpg.draw_rectangle([i*self.w.columnwidth,self.w.bodyheight-(num+1)*self.w.columnheight-5],[(i+1)*self.w.columnwidth,self.w.bodyheight-5]
+                                    ,fill=GREEN,parent=self.parent,rounding=1)
             self.ids.append(id)
 
 class Column:
@@ -64,8 +67,8 @@ class Gui:
         self.start = dpg.add_button(label="Start",callback=self.startButton,parent=self.header)
         self.shuffle = dpg.add_button(label="Shuffle",callback=self.shuffleButton,parent=self.header)
         self.algorithm = dpg.add_combo(label="algorithm",items=self.algorithmNames,default_value="Bubble Sort",parent=self.header,callback=self.algoList)
-        self.columnSlider = dpg.add_slider_int(label="columns",default_value=150, max_value=400,min_value=10,parent=self.header)
-
+        self.columnSlider = dpg.add_slider_int(label="columns",default_value=150, max_value=500,min_value=10,parent=self.header)
+        self.speedSlider = dpg.add_slider_float(label="speed",default_value=0.7, max_value=0.999,min_value=0.001,parent=self.header)
         self.body = dpg.add_window(label="main",width=self.w.width,height=self.w.bodyheight,pos=(0,self.w.headerheight),no_close=True,no_title_bar=True,no_resize=True,no_move=True)
         
         self.board = Board(self.body,self.w)
@@ -111,7 +114,7 @@ class Gui:
     def gameLoop(self):
         while 1:
             if self.sorting:
-                time.sleep(0.001)
+                time.sleep((1-dpg.get_value(self.speedSlider))/10)
                 try:
                     next(self.gen)
                     pass
