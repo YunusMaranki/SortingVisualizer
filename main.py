@@ -2,8 +2,6 @@ import dearpygui.dearpygui as dpg
 import threading
 import random
 import time
-
-from numpy import insert
 from algorithms import *
 
 dpg.create_context()
@@ -27,7 +25,7 @@ class windowInformation:
         self.columnwidth = (width-15)/columns
         self.columnheight = self.bodyheight/columns
 
-w = windowInformation(650,1000,150,50)
+w = windowInformation(650,1000,150,150)
 
 class Board:
     def __init__(self,parent):
@@ -60,11 +58,8 @@ class Column:
     def __lt__(self,otherColumn):
         return self.height<otherColumn.height
 
-def value(sender):
-    print(sender)
-
 def startButton(sender):
-    global sorting, shuffle, algorithm
+    global sorting
     if sorting:
         sorting = False
         dpg.configure_item(shuffle,enabled=True)
@@ -77,7 +72,7 @@ def startButton(sender):
         dpg.configure_item(sender,label="stop")
 
 def shuffleButton():
-    global board,gen,w,columnSlider,algorithm
+    global board,gen,w
     w = windowInformation(w.height,w.width,w.headerheight,dpg.get_value(columnSlider))
     board.columns = [Column(x,GREEN) for x in range(w.columns)]
     board.length = w.columns
@@ -85,18 +80,18 @@ def shuffleButton():
     board.initalDraw()
     #gen = bubbleSort(board)
     gen = algorithmList[algorithmNames.index(dpg.get_value(algorithm))](board)
-    print(gen)
+
 
 def algoList():
-    global gen,algorithm,algorithmList,algorithmNames,board
+    global gen
     gen = algorithmList[algorithmNames.index(dpg.get_value(algorithm))](board)
-    print(gen)
+
 
 def gameLoop():
-    global sorting, start
+    global sorting
     while 1:
         if sorting:
-            time.sleep(0.1)
+            time.sleep(0.001)
             try:
                 next(gen)
                 pass
@@ -110,8 +105,8 @@ header = dpg.add_window(label="Controlls",width=w.width,height=w.headerheight,no
 
 start = dpg.add_button(label="Start",callback=startButton,parent=header)
 shuffle = dpg.add_button(label="Shuffle",callback=shuffleButton,parent=header)
-algorithm = dpg.add_combo(label="algorithms",items=algorithmNames,default_value="Insertion Sort",parent=header,callback=algoList)
-columnSlider = dpg.add_slider_int(label="columns",default_value=50, max_value=300,min_value=10,parent=header)
+algorithm = dpg.add_combo(label="algorithm",items=algorithmNames,default_value="Bubble Sort",parent=header,callback=algoList)
+columnSlider = dpg.add_slider_int(label="columns",default_value=150, max_value=300,min_value=10,parent=header)
 
 body = dpg.add_window(label="main",width=w.width,height=w.bodyheight,pos=(0,w.headerheight),no_close=True,no_title_bar=True,no_resize=True,no_move=True)
 board = Board(body)
@@ -127,8 +122,6 @@ dpg.create_viewport(title="Sorting Visualizer",width=w.width,height=w.height,res
 dpg.setup_dearpygui()
 dpg.show_viewport()
 
-#while dpg.is_dearpygui_running():
-    #dpg.render_dearpygui_frame()
 
 dpg.start_dearpygui()
 dpg.destroy_context()
