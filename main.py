@@ -3,16 +3,7 @@ import threading
 import random
 import time
 from algorithms import *
-
-dpg.create_context()
-
-algorithmList = [bubbleSort,insertionSort]
-algorithmNames = ["Bubble Sort","Insertion Sort"]
-
 GREEN = (10,256,150)
-
-
-sorting = False
 
 
 class windowInformation:
@@ -25,13 +16,14 @@ class windowInformation:
         self.columnwidth = (width-15)/columns
         self.columnheight = self.bodyheight/columns
 
-w = windowInformation(650,1000,150,150)
+
 
 class Board:
-    def __init__(self,parent):
+    def __init__(self,parent,windowInfo):
+        self.w = windowInfo
         self.parent = parent
-        self.columns = [Column(x,GREEN) for x in range(w.columns)]
-        self.length = w.columns
+        self.columns = [Column(x,GREEN) for x in range(self.w.columns)]
+        self.length = self.w.columns
         self.ids = []
         random.shuffle(self.columns)
 
@@ -40,14 +32,14 @@ class Board:
 
     def swap(self,indexA,indexB):
         self.columns[indexA],self.columns[indexB] = self.columns[indexB],self.columns[indexA]
-        dpg.configure_item(self.ids[indexA],pmin=[indexA*w.columnwidth,w.bodyheight-(self.columns[indexA].height+1)*w.columnheight-5])
-        dpg.configure_item(self.ids[indexB],pmin=[indexB*w.columnwidth,w.bodyheight-(self.columns[indexB].height+1)*w.columnheight-5])
+        dpg.configure_item(self.ids[indexA],pmin=[indexA*self.w.columnwidth,self.w.bodyheight-(self.columns[indexA].height+1)*self.w.columnheight-5])
+        dpg.configure_item(self.ids[indexB],pmin=[indexB*self.w.columnwidth,self.w.bodyheight-(self.columns[indexB].height+1)*self.w.columnheight-5])
 
     def initalDraw(self):
         dpg.delete_item(self.parent,children_only=True)
         self.ids = [] 
         for i, num in  enumerate([x.height for x in self.columns]):
-            id = dpg.draw_rectangle([i*w.columnwidth,w.bodyheight-(num+1)*w.columnheight-5],[(i+1)*w.columnwidth,w.bodyheight-5],fill=GREEN,parent=self.parent)
+            id = dpg.draw_rectangle([i*self.w.columnwidth,self.w.bodyheight-(num+1)*self.w.columnheight-5],[(i+1)*self.w.columnwidth,self.w.bodyheight-5],fill=GREEN,parent=self.parent)
             self.ids.append(id)
 
 class Column:
@@ -58,70 +50,78 @@ class Column:
     def __lt__(self,otherColumn):
         return self.height<otherColumn.height
 
-def startButton(sender):
-    global sorting
-    if sorting:
-        sorting = False
-        dpg.configure_item(shuffle,enabled=True)
-        dpg.configure_item(algorithm,enabled=True)
-        dpg.configure_item(sender,label="start")
-    else:
-        sorting = True
-        dpg.configure_item(shuffle,enabled=False)
-        dpg.configure_item(algorithm,enabled=False)
-        dpg.configure_item(sender,label="stop")
+class Gui:
+    def __init__(self):
+        dpg.create_context()
+        
+        self.w = windowInformation(650,1000,150,150)
+        self.algorithmList = [bubbleSort,insertionSort]
+        self.algorithmNames = ["Bubble Sort","Insertion Sort"]
+        self.sorting = False
+        
+        self.header = dpg.add_window(label="Controlls",width=self.w.width,height=self.w.headerheight,no_close=True,no_title_bar=True,no_resize=True,no_move=True)
 
-def shuffleButton():
-    global board,gen,w
-    w = windowInformation(w.height,w.width,w.headerheight,dpg.get_value(columnSlider))
-    board.columns = [Column(x,GREEN) for x in range(w.columns)]
-    board.length = w.columns
-    board.shuffle()
-    board.initalDraw()
-    #gen = bubbleSort(board)
-    gen = algorithmList[algorithmNames.index(dpg.get_value(algorithm))](board)
+        self.start = dpg.add_button(label="Start",callback=self.startButton,parent=self.header)
+        self.shuffle = dpg.add_button(label="Shuffle",callback=self.shuffleButton,parent=self.header)
+        self.algorithm = dpg.add_combo(label="algorithm",items=self.algorithmNames,default_value="Bubble Sort",parent=self.header,callback=self.algoList)
+        self.columnSlider = dpg.add_slider_int(label="columns",default_value=150, max_value=400,min_value=10,parent=self.header)
 
+        self.body = dpg.add_window(label="main",width=self.w.width,height=self.w.bodyheight,pos=(0,self.w.headerheight),no_close=True,no_title_bar=True,no_resize=True,no_move=True)
+        
+        self.board = Board(self.body,self.w)
+        self.board.initalDraw()
 
-def algoList():
-    global gen
-    gen = algorithmList[algorithmNames.index(dpg.get_value(algorithm))](board)
+        self.gen = self.algorithmList[self.algorithmNames.index(dpg.get_value(self.algorithm))](self.board)
 
+        thread = threading.Thread(target=self.gameLoop)
+        thread.start()
 
-def gameLoop():
-    global sorting
-    while 1:
-        if sorting:
-            time.sleep(0.001)
-            try:
-                next(gen)
-                pass
-            except StopIteration:
-                sorting = False
-                dpg.configure_item(shuffle,enabled=True)
-                dpg.configure_item(algorithm,enabled=True)
-                dpg.configure_item(start,label="start")
+        dpg.create_viewport(title="Sorting Visualizer",width=self.w.width,height=self.w.height,resizable=False,)
+        dpg.setup_dearpygui()
+        dpg.show_viewport()
+        dpg.start_dearpygui()
+        dpg.destroy_context()
 
-header = dpg.add_window(label="Controlls",width=w.width,height=w.headerheight,no_close=True,no_title_bar=True,no_resize=True,no_move=True)
+    def startButton(self):
+        if self.sorting:
+            self.sorting = False
+            dpg.configure_item(self.shuffle,enabled=True)
+            dpg.configure_item(self.algorithm,enabled=True)
+            dpg.configure_item(self.start,label="start")
+        else:
+            self.sorting = True
+            dpg.configure_item(self.shuffle,enabled=False)
+            dpg.configure_item(self.algorithm,enabled=False)
+            dpg.configure_item(self.start,label="stop")
 
-start = dpg.add_button(label="Start",callback=startButton,parent=header)
-shuffle = dpg.add_button(label="Shuffle",callback=shuffleButton,parent=header)
-algorithm = dpg.add_combo(label="algorithm",items=algorithmNames,default_value="Bubble Sort",parent=header,callback=algoList)
-columnSlider = dpg.add_slider_int(label="columns",default_value=150, max_value=300,min_value=10,parent=header)
-
-body = dpg.add_window(label="main",width=w.width,height=w.bodyheight,pos=(0,w.headerheight),no_close=True,no_title_bar=True,no_resize=True,no_move=True)
-board = Board(body)
-board.initalDraw()
-
-gen = algorithmList[algorithmNames.index(dpg.get_value(algorithm))](board)
-gen = insertionSort(board)
-thread = threading.Thread(target=gameLoop)
-thread.start()
-
-dpg.create_viewport(title="Sorting Visualizer",width=w.width,height=w.height,resizable=False,)
-
-dpg.setup_dearpygui()
-dpg.show_viewport()
+    def shuffleButton(self):
+        self.w = windowInformation(self.w.height,self.w.width,self.w.headerheight,dpg.get_value(self.columnSlider))
+        self.board.w = self.w
+        self.board.columns = [Column(x,GREEN) for x in range(self.w.columns)]
+        self.board.length = self.w.columns
+        self.board.shuffle()
+        self.board.initalDraw()
+        self.gen = self.algorithmList[self.algorithmNames.index(dpg.get_value(self.algorithm))](self.board)
 
 
-dpg.start_dearpygui()
-dpg.destroy_context()
+    def algoList(self):
+        self.gen = self.algorithmList[self.algorithmNames.index(dpg.get_value(self.algorithm))](self.board)
+
+
+    def gameLoop(self):
+        while 1:
+            if self.sorting:
+                time.sleep(0.001)
+                try:
+                    next(self.gen)
+                    pass
+                except StopIteration:
+                    self.sorting = False
+                    dpg.configure_item(self.shuffle,enabled=True)
+                    dpg.configure_item(self.algorithm,enabled=True)
+                    dpg.configure_item(self.start,label="start")
+
+
+
+if __name__ == "__main__":
+    Gui()
