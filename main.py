@@ -58,8 +58,8 @@ class Gui:
         dpg.create_context()
 
         self.w = windowInformation(650,1000,150,150)
-        self.algorithmList = [bubbleSort,insertionSort,shellSort,selectionSort]
-        self.algorithmNames = ["Bubble Sort","Insertion Sort","Shell Sort","Selection Sort"]
+        self.algorithmList = [bubbleSort,insertionSort,shellSort,selectionSort,quickSort]
+        self.algorithmNames = ["Bubble Sort","Insertion Sort","Shell Sort","Selection Sort","Quick Sort"]
         self.sorting = False
         
         self.header = dpg.add_window(label="Controlls",width=self.w.width,height=self.w.headerheight,no_close=True,no_title_bar=True,no_resize=True,no_move=True)
@@ -78,6 +78,7 @@ class Gui:
 
         thread = threading.Thread(target=self.gameLoop)
         thread.start()
+        
 
         dpg.create_viewport(title="Sorting Visualizer",width=self.w.width,height=self.w.height,resizable=False,)
         dpg.setup_dearpygui()
