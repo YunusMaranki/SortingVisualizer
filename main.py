@@ -27,9 +27,26 @@ class Board:
         self.ids = []
         random.shuffle(self.columns)
 
-    def shuffle(self):
+    def shuffleRandom(self):
         random.shuffle(self.columns)
 
+    def shuffleAlmost(self):
+        self.columns.sort()
+        for i in range(len(self.columns)//35):
+            for j in range(len(self.columns)//15):
+                a = random.randint(i*35,(i+1)*35-1)
+                b = random.randint(i*35,(i+1)*35-1)
+                self.columns[a], self.columns[b] = self.columns[b], self.columns[a]
+        if len(self.columns) > 35:
+            for j in range(len(self.columns)//15):
+                    a = random.randint(len(self.columns)-35,len(self.columns)-1)
+                    b = random.randint(len(self.columns)-35,len(self.columns)-1)
+                    self.columns[a], self.columns[b] = self.columns[b], self.columns[a]
+
+    def shuffleReversed(self):
+        self.columns.sort()
+        self.columns.reverse()
+    
     def swap(self,indexA,indexB):
         self.columns[indexA],self.columns[indexB] = self.columns[indexB],self.columns[indexA]
         dpg.configure_item(self.ids[indexA],pmin=[indexA*self.w.columnwidth,self.w.bodyheight-(self.columns[indexA].height+1)*self.w.columnheight-5]
@@ -58,14 +75,14 @@ class Gui:
         dpg.create_context()
 
         self.w = windowInformation(650,1000,150,150)
-        self.algorithmList = [bubbleSort,insertionSort,shellSort,selectionSort,quickSort]
-        self.algorithmNames = ["Bubble Sort","Insertion Sort","Shell Sort","Selection Sort","Quick Sort"]
+        self.algorithmList = [bubbleSort,insertionSort,shellSort,selectionSort,quickSort,mergeSort]
+        self.algorithmNames = ["Bubble Sort","Insertion Sort","Shell Sort","Selection Sort","Quick Sort","Merge Sort"]
         self.sorting = False
         
         self.header = dpg.add_window(label="Controlls",width=self.w.width,height=self.w.headerheight,no_close=True,no_title_bar=True,no_resize=True,no_move=True)
-
         self.start = dpg.add_button(label="Start",callback=self.startButton,parent=self.header)
         self.shuffle = dpg.add_button(label="Shuffle",callback=self.shuffleButton,parent=self.header)
+        self.shuffleMethod = dpg.add_combo(label="algorithm",items=["random","almost sorted","reversed"],default_value="random",parent=self.header,callback=self.algoList)
         self.algorithm = dpg.add_combo(label="algorithm",items=self.algorithmNames,default_value="Bubble Sort",parent=self.header,callback=self.algoList)
         self.columnSlider = dpg.add_slider_int(label="columns",default_value=150, max_value=500,min_value=10,parent=self.header)
         self.speedSlider = dpg.add_slider_float(label="speed",default_value=0.7, max_value=0.999,min_value=0.001,parent=self.header)
@@ -103,7 +120,12 @@ class Gui:
         self.board.w = self.w
         self.board.columns = [Column(x,GREEN) for x in range(self.w.columns)]
         self.board.length = self.w.columns
-        self.board.shuffle()
+        if dpg.get_value(self.shuffleMethod) == "random":
+            self.board.shuffleRandom()
+        elif dpg.get_value(self.shuffleMethod) == "almost sorted":
+            self.board.shuffleAlmost()
+        elif dpg.get_value(self.shuffleMethod) == "reversed":
+            self.board.shuffleReversed()
         self.board.initalDraw()
         self.gen = self.algorithmList[self.algorithmNames.index(dpg.get_value(self.algorithm))](self.board)
 
@@ -131,3 +153,4 @@ if __name__ == "__main__":
     Gui()
 
 #todo: comparison and swap cost einbauen
+#verschieden sortierungen
