@@ -3,7 +3,7 @@ import threading
 import random
 import time
 from algorithms import *
-GREEN = (10,256,150)
+GREEN = (0,216,110)
 RED = (255, 107, 107)
 
 class windowInformation:
@@ -75,8 +75,8 @@ class Gui:
         dpg.create_context()
 
         self.w = windowInformation(650,1000,150,150)
-        self.algorithmList = [bubbleSort,insertionSort,shellSort,selectionSort,quickSort,mergeSort]
-        self.algorithmNames = ["Bubble Sort","Insertion Sort","Shell Sort","Selection Sort","Quick Sort","Merge Sort"]
+        self.algorithmList = [bubbleSort,insertionSort,shellSort,selectionSort,quickSort]
+        self.algorithmNames = ["Bubble Sort","Insertion Sort","Shell Sort","Selection Sort","Quick Sort"]
         self.sorting = False
         
         self.header = dpg.add_window(label="Controlls",width=self.w.width,height=self.w.headerheight,no_close=True,no_title_bar=True,no_resize=True,no_move=True)

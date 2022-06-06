@@ -1,2 +1,0 @@
-def mergeSort(board):
-    pass
